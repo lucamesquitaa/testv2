@@ -35,12 +35,11 @@ class TravelsController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'Id'=> 'sometimes|required|integer',
-                'Name' => 'sometimes|required|string|max:255',
-                'Travel' => 'sometimes|required|string|max:255',
-                'DateIn' => 'sometimes|required|string',
-                'DateOut' => 'sometimes|required|string',
-                'Status' => 'sometimes|required|string|max:50'
+                'Name' => 'required|string|max:255',
+                'Travel' => 'required|string|max:255',
+                'DateIn' => 'required|date',
+                'DateOut' => 'required|date',
+                'Status' => 'required|string|max:50'
             ]);
 
             $travel = Travel::create($validatedData);

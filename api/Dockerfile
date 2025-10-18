@@ -42,6 +42,9 @@ RUN chmod +x /start.sh
 # Complete the composer install with autoloader and scripts
 RUN composer dump-autoload --optimize
 
+# Verify vendor directory exists
+RUN ls -la /var/www/html/vendor || echo "Warning: vendor directory not found"
+
 # Create required directories
 RUN mkdir -p /var/www/html/storage/logs \
     && mkdir -p /var/www/html/storage/framework/cache \
