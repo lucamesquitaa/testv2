@@ -30,7 +30,7 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Install dependencies without the project files first
-RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader
+RUN composer install --no-dev --no-scripts --optimize-autoloader
 
 # Copy the rest of the application
 COPY . .
@@ -39,17 +39,21 @@ COPY . .
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Complete the composer install with autoloader and scripts
+# Create required directories before composer dump-autoload
+RUN mkdir -p /var/www/html/bootstrap/cache \
+    && mkdir -p /var/www/html/storage/logs \
+    && mkdir -p /var/www/html/storage/framework/cache \
+    && mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/storage/framework/views
+
+# Run composer install again to ensure everything is set up correctly
+RUN composer install --no-dev --optimize-autoloader
+
+# Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
 # Verify vendor directory exists
 RUN ls -la /var/www/html/vendor || echo "Warning: vendor directory not found"
-
-# Create required directories
-RUN mkdir -p /var/www/html/storage/logs \
-    && mkdir -p /var/www/html/storage/framework/cache \
-    && mkdir -p /var/www/html/storage/framework/sessions \
-    && mkdir -p /var/www/html/storage/framework/views
 
 # Change ownership of storage and bootstrap/cache directories
 RUN chown -R www-data:www-data /var/www/html/storage \
