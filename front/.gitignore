@@ -7,13 +7,25 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependências
 node_modules
-.DS_Store
+
+# Arquivos de build
 dist
 dist-ssr
+.vite
+
+# Coverage
 coverage
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.production
+.env.development
 *.local
 
+# Testes
 /cypress/videos/
 /cypress/screenshots/
 
@@ -27,4 +39,9 @@ coverage
 *.sln
 *.sw?
 
+# TypeScript
 *.tsbuildinfo
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db

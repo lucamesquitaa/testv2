@@ -1,0 +1,58 @@
+# Dependências PHP (Laravel/Composer)
+api/vendor/
+api/composer.lock
+
+# Dependências Node.js
+front/node_modules/
+front/package-lock.json
+front/yarn.lock
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.production
+.env.development
+api/.env
+front/.env
+
+# Logs
+*.log
+logs/
+api/storage/logs/
+front/logs/
+
+# Cache e arquivos temporários
+api/storage/framework/cache/
+api/storage/framework/sessions/
+api/storage/framework/views/
+api/bootstrap/cache/
+front/dist/
+front/dist-ssr/
+front/.vite/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# IDEs e editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Banco de dados
+*.sqlite
+*.db
+
+# Coverage reports
+coverage/
+front/coverage/

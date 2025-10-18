@@ -47,6 +47,19 @@ if ($useDockerCompose) {
 Write-Host "⏳ Aguardando containers iniciarem..." -ForegroundColor Yellow
 Start-Sleep -Seconds 30
 
+# Instalar dependências do Composer
+Write-Host "📦 Instalando dependências do Composer..." -ForegroundColor Yellow
+try {
+    if ($useDockerCompose) {
+        docker-compose exec -T api composer install --no-dev --optimize-autoloader
+    } else {
+        docker compose exec -T api composer install --no-dev --optimize-autoloader
+    }
+    Write-Host "✅ Dependências instaladas com sucesso!" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️ Erro ao instalar dependências. Execute manualmente: docker exec -it onfly_api composer install" -ForegroundColor Yellow
+}
+
 # Gerar chave da aplicação Laravel
 Write-Host "🔑 Gerando chave da aplicação Laravel..." -ForegroundColor Yellow
 try {

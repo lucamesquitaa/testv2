@@ -28,6 +28,11 @@ docker-compose up --build -d
 echo "⏳ Aguardando containers iniciarem..."
 sleep 30
 
+# Instalar dependências do Composer
+echo "📦 Instalando dependências do Composer..."
+docker-compose exec -T api composer install --no-dev --optimize-autoloader
+echo "✅ Dependências instaladas com sucesso!"
+
 # Gerar chave da aplicação Laravel
 echo "🔑 Gerando chave da aplicação Laravel..."
 docker-compose exec -T api php artisan key:generate
