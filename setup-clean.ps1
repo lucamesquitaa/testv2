@@ -47,8 +47,30 @@ if ($useDockerCompose) {
     docker compose up --build -d
 }
 
+# Aguardar containers iniciarem com verificacao de saude
 Write-Host "Aguardando containers iniciarem..." -ForegroundColor Yellow
-Start-Sleep -Seconds 30
+$maxWait = 120  # 2 minutos
+$waited = 0
+$step = 10
+
+while ($waited -lt $maxWait) {
+    Start-Sleep -Seconds $step
+    $waited += $step
+    
+    Write-Host "Verificando status dos containers ($waited/$maxWait segundos)..." -ForegroundColor Yellow
+    
+    # Verificar se PostgreSQL esta saudavel
+    $pgHealth = docker inspect onfly_postgres --format '{{.State.Health.Status}}' 2>$null
+    if ($pgHealth -eq "healthy") {
+        Write-Host "PostgreSQL esta saudavel!" -ForegroundColor Green
+        break
+    }
+    
+    if ($waited -ge $maxWait) {
+        Write-Host "Aviso: Timeout aguardando PostgreSQL. Continuando mesmo assim..." -ForegroundColor Yellow
+        break
+    }
+}
 
 # Criar diretorios necessarios do Laravel
 Write-Host "Criando diretorios necessarios..." -ForegroundColor Yellow
@@ -64,10 +86,10 @@ try {
 # Instalar dependencias do Composer
 Write-Host "Instalando dependencias do Composer..." -ForegroundColor Yellow
 try {
-    docker exec onfly_api composer install --no-dev --optimize-autoloader
+    docker exec onfly_api composer install --ignore-platform-req=ext-fileinfo --optimize-autoloader
     Write-Host "Dependencias instaladas com sucesso!" -ForegroundColor Green
 } catch {
-    Write-Host "Erro ao instalar dependencias. Execute manualmente: docker exec onfly_api composer install --no-dev --optimize-autoloader" -ForegroundColor Yellow
+    Write-Host "Erro ao instalar dependencias. Execute manualmente: docker exec onfly_api composer install --ignore-platform-req=ext-fileinfo --optimize-autoloader" -ForegroundColor Yellow
 }
 
 # Gerar chave da aplicacao Laravel
@@ -86,6 +108,19 @@ try {
     Write-Host "Chave JWT gerada com sucesso!" -ForegroundColor Green
 } catch {
     Write-Host "Erro ao gerar chave JWT. Execute manualmente: docker exec onfly_api php artisan jwt:secret --force" -ForegroundColor Yellow
+}
+
+# Aguardar mais um pouco para garantir que a API esta pronta
+Write-Host "Aguardando API ficar pronta..." -ForegroundColor Yellow
+Start-Sleep -Seconds 15
+
+# Verificar conectividade com banco de dados
+Write-Host "Testando conexao com banco de dados..." -ForegroundColor Yellow
+try {
+    docker exec onfly_api php artisan migrate:status
+    Write-Host "Conexao com banco de dados OK!" -ForegroundColor Green
+} catch {
+    Write-Host "Aviso: Problemas de conexao com banco. Continuando..." -ForegroundColor Yellow
 }
 
 # Limpar e recriar banco de dados
@@ -110,6 +145,19 @@ try {
     Write-Host "Usuario admin criado com sucesso! (admin@admin.com / admin)" -ForegroundColor Green
 } catch {
     Write-Host "Erro ao criar usuario admin. Execute manualmente: docker exec onfly_api php artisan db:seed --class=UserSeeder" -ForegroundColor Yellow
+}
+
+# Teste final da API
+Write-Host "Testando API..." -ForegroundColor Yellow
+try {
+    $healthCheck = docker exec onfly_api curl -s http://localhost:8000/api/health 2>$null
+    if ($healthCheck) {
+        Write-Host "API responde corretamente!" -ForegroundColor Green
+    } else {
+        Write-Host "Aviso: API pode nao estar respondendo." -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "Aviso: Nao foi possivel testar a API." -ForegroundColor Yellow
 }
 
 Write-Host ""
