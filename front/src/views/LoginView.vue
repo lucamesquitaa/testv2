@@ -1,8 +1,5 @@
 <template>
   <div class="login-container">
-    <!-- Debug Component (temporário) -->
-    <ApiDebug />
-    
     <div class="login-card">
       <div class="login-header">
         <h1>Entrar</h1>
