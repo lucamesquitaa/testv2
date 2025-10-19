@@ -18,6 +18,17 @@ echo "✅ Database connection established"
 echo "🗄️ Running database migrations..."
 php artisan migrate --force
 
+# Handle cache table for database cache driver
+if [ "$CACHE_STORE" = "database" ]; then
+    echo "🗄️ Checking cache table for database cache driver..."
+    # Check if cache table migration exists, if not create it
+    if ! php artisan tinker --execute="Schema::hasTable('cache');" 2>/dev/null | grep -q "true"; then
+        echo "📦 Creating cache table migration..."
+        php artisan cache:table
+        php artisan migrate --force
+    fi
+fi
+
 # Clear and cache config for better performance
 echo "🔧 Optimizing Laravel..."
 php artisan config:clear

@@ -19,6 +19,11 @@ Este setup Docker inclui:
 # Copiar o arquivo de ambiente para a API
 cp api/.env.docker api/.env
 
+# IMPORTANTE: Configurar cache driver
+# Para desenvolvimento local, recomenda-se usar file cache:
+# Edite api/.env e defina: CACHE_STORE=file
+# Para produção com cache database, certifique-se de executar: php artisan cache:table && php artisan migrate
+
 # Gerar chave da aplicação Laravel (será feito automaticamente no container)
 ```
 
