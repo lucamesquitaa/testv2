@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import FilterModal from './FilterModal.vue'
+import authService from '@/services/authService'
+import router from '@/router'
 
 const pessoas = ref<Array<{id: number, name: string, viagem: string, dataIda: string, dataVolta: string, status: string}>>([])
 
@@ -97,10 +99,20 @@ onMounted(() => {
   fetchData();
 })
 
+ const voltarLogin = () => {
+    authService.logout();
+    router.push('/'); // Redireciona para a página de login
+  }
+
 async function aprovarViagem(id: number) {
   try {
     if (!confirm('Tem certeza que deseja aprovar esta viagem?')) {
       return
+    }
+
+    if(!authService.getToken()){
+      alert('Usuário sem permissão para esta ação. Por favor, faça login.')
+      return;
     }
 
     // Definir múltiplas URLs para tentar
@@ -157,6 +169,11 @@ async function cancelarViagem(id: number) {
   try {
     if (!confirm('Tem certeza que deseja cancelar esta viagem?')) {
       return
+    }
+
+    if(!authService.getToken()){
+      alert('Usuário sem permissão para esta ação. Por favor, faça login.')
+      return;
     }
 
     // Definir múltiplas URLs para tentar
@@ -227,6 +244,9 @@ defineExpose({
     <button @click="openModalFilter" class="filter">
         Filtrar por Status!
       </button>
+    <button @click="voltarLogin" class="filter2">
+        Sair
+    </button>
   <table>
     <thead>
       <tr>
@@ -312,6 +332,17 @@ v-icon:hover {
   margin: 20px 30px;
   padding: 10px 20px;
   background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+.filter2 {
+  margin: 20px 30px;
+  padding: 10px 20px;
+  background-color: #3a3a3a;
   color: white;
   border: none;
   border-radius: 4px;

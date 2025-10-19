@@ -51,6 +51,13 @@
           {{ loading ? 'Entrando...' : 'Entrar' }}
         </button>
 
+         <button
+         @click="handleWithOutLogin"
+          class="login-button2"
+        >
+          {{ loading ? 'Entrando...' : 'Entrar Sem Login' }}
+        </button>
+
         <div v-if="error" class="error-message general-error">
           {{ error }}
         </div>
@@ -64,6 +71,7 @@ import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import ApiDebug from '@/components/ApiDebug.vue'
+import authService from '@/services/authService'
 
 interface LoginForm {
   email: string
@@ -144,6 +152,15 @@ const showRegister = () => {
   // Implementar navegação para registro ou abrir modal
   console.log('Navegar para registro')
 }
+
+
+const handleWithOutLogin = () => {
+  // Implementar lógica para entrar sem login
+  authService.clearAuthData();
+  router.push('/home');
+}
+
+
 </script>
 
 <style scoped>
@@ -292,6 +309,22 @@ const showRegister = () => {
 
 .login-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.login-button2 {
+  background: #464646;
   color: white;
   border: none;
   border-radius: 8px;
