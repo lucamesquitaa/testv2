@@ -50,51 +50,53 @@ if ($useDockerCompose) {
 Write-Host "Aguardando containers iniciarem..." -ForegroundColor Yellow
 Start-Sleep -Seconds 30
 
+# Criar diretorios necessarios do Laravel
+Write-Host "Criando diretorios necessarios..." -ForegroundColor Yellow
+try {
+    docker exec onfly_api mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/logs /var/www/html/storage/framework/cache /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views
+    docker exec onfly_api chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+    docker exec onfly_api chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    Write-Host "Diretorios criados com sucesso!" -ForegroundColor Green
+} catch {
+    Write-Host "Aviso: Erro ao criar diretorios. Continuando..." -ForegroundColor Yellow
+}
+
 # Instalar dependencias do Composer
 Write-Host "Instalando dependencias do Composer..." -ForegroundColor Yellow
 try {
-    if ($useDockerCompose) {
-        docker-compose exec -T api composer install --no-dev --optimize-autoloader
-    } else {
-        docker compose exec -T api composer install --no-dev --optimize-autoloader
-    }
+    docker exec onfly_api composer install --no-dev --optimize-autoloader
     Write-Host "Dependencias instaladas com sucesso!" -ForegroundColor Green
 } catch {
-    Write-Host "Erro ao instalar dependencias. Execute manualmente: docker exec -it onfly_api composer install" -ForegroundColor Yellow
+    Write-Host "Erro ao instalar dependencias. Execute manualmente: docker exec onfly_api composer install --no-dev --optimize-autoloader" -ForegroundColor Yellow
 }
 
 # Gerar chave da aplicacao Laravel
 Write-Host "Gerando chave da aplicacao Laravel..." -ForegroundColor Yellow
 try {
-    if ($useDockerCompose) {
-        docker-compose exec -T api php artisan key:generate
-    } else {
-        docker compose exec -T api php artisan key:generate
-    }
+    docker exec onfly_api php artisan key:generate
 } catch {
-    Write-Host "Erro ao gerar chave. Execute manualmente depois." -ForegroundColor Yellow
+    Write-Host "Erro ao gerar chave. Execute manualmente: docker exec onfly_api php artisan key:generate" -ForegroundColor Yellow
 }
 
-# Executar migrations
-Write-Host "Executando migrations..." -ForegroundColor Yellow
+# Limpar e recriar banco de dados
+Write-Host "Limpando e recriando banco de dados..." -ForegroundColor Yellow
 try {
-    if ($useDockerCompose) {
-        docker-compose exec -T api php artisan migrate --force
-    } else {
-        docker compose exec -T api php artisan migrate --force
-    }
+    docker exec onfly_api php artisan migrate:fresh --force
+    Write-Host "Banco de dados limpo e recriado com sucesso!" -ForegroundColor Green
 } catch {
-    Write-Host "Erro ao executar migrations. Execute manualmente depois." -ForegroundColor Yellow
+    Write-Host "Erro ao limpar banco. Tentando migrations normais..." -ForegroundColor Yellow
+    try {
+        docker exec onfly_api php artisan migrate --force
+        Write-Host "Migrations executadas com sucesso!" -ForegroundColor Green
+    } catch {
+        Write-Host "Erro ao executar migrations. Execute manualmente: docker exec onfly_api php artisan migrate --force" -ForegroundColor Yellow
+    }
 }
 
 # Executar seeder para criar usuario admin
 Write-Host "Criando usuario admin padrao..." -ForegroundColor Yellow
 try {
-    if ($useDockerCompose) {
-        docker-compose exec -T api php artisan db:seed --class=UserSeeder
-    } else {
-        docker compose exec -T api php artisan db:seed --class=UserSeeder
-    }
+    docker exec onfly_api php artisan db:seed --class=UserSeeder
     Write-Host "Usuario admin criado com sucesso! (admin@admin.com / admin)" -ForegroundColor Green
 } catch {
     Write-Host "Erro ao criar usuario admin. Execute manualmente: docker exec onfly_api php artisan db:seed --class=UserSeeder" -ForegroundColor Yellow
@@ -122,4 +124,9 @@ if ($useDockerCompose) {
     Write-Host "   Parar containers:   docker compose down" -ForegroundColor White
     Write-Host "   Reiniciar:          docker compose restart" -ForegroundColor White
 }
+Write-Host ""
+Write-Host "Comandos para banco de dados:" -ForegroundColor Cyan
+Write-Host "   Limpar banco:       docker exec onfly_api php artisan migrate:fresh --force" -ForegroundColor White
+Write-Host "   Recriar admin:      docker exec onfly_api php artisan db:seed --class=UserSeeder" -ForegroundColor White
+Write-Host "   Reset completo:     docker exec onfly_api php artisan migrate:fresh --seed --force" -ForegroundColor White
 Write-Host ""

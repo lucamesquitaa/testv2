@@ -36,8 +36,8 @@ RUN composer install --no-dev --no-scripts --optimize-autoloader
 COPY . .
 
 # Copy and make start script executable
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY start.sh /var/www/html/start.sh
+RUN chmod +x /var/www/html/start.sh
 
 # Create required directories before composer dump-autoload
 RUN mkdir -p /var/www/html/bootstrap/cache \
@@ -65,4 +65,4 @@ RUN chown -R www-data:www-data /var/www/html/storage \
 EXPOSE 8000
 
 # Start the application
-CMD ["/start.sh"]
+CMD ["/var/www/html/start.sh"]

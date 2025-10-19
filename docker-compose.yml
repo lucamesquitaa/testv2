@@ -52,6 +52,17 @@ services:
         condition: service_healthy
     networks:
       - onfly_network
+    command: >
+      bash -c "
+        echo 'Waiting for database...' &&
+        until php artisan tinker --execute='DB::connection()->getPdo();' 2>/dev/null; do
+          echo 'Database not ready, waiting...' && sleep 2;
+        done &&
+        echo 'Running migrations...' &&
+        php artisan migrate --force &&
+        echo 'Starting server...' &&
+        php artisan serve --host=0.0.0.0 --port=8000
+      "
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
