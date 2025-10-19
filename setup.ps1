@@ -64,12 +64,26 @@ try {
 Write-Host "🔑 Gerando chave da aplicação Laravel..." -ForegroundColor Yellow
 try {
     if ($useDockerCompose) {
-        docker-compose exec -T api php artisan key:generate
+        docker-compose exec -T api php artisan key:generate --force
     } else {
-        docker compose exec -T api php artisan key:generate
+        docker compose exec -T api php artisan key:generate --force
     }
+    Write-Host "✅ Chave da aplicação gerada!" -ForegroundColor Green
 } catch {
     Write-Host "⚠️ Erro ao gerar chave. Execute manualmente depois." -ForegroundColor Yellow
+}
+
+# Gerar chave JWT
+Write-Host "🔐 Gerando chave JWT..." -ForegroundColor Yellow
+try {
+    if ($useDockerCompose) {
+        docker-compose exec -T api php artisan jwt:secret --force
+    } else {
+        docker compose exec -T api php artisan jwt:secret --force
+    }
+    Write-Host "✅ Chave JWT gerada!" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️ Erro ao gerar chave JWT. Execute manualmente depois." -ForegroundColor Yellow
 }
 
 # Executar migrations

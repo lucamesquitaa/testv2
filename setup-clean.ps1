@@ -73,9 +73,19 @@ try {
 # Gerar chave da aplicacao Laravel
 Write-Host "Gerando chave da aplicacao Laravel..." -ForegroundColor Yellow
 try {
-    docker exec onfly_api php artisan key:generate
+    docker exec onfly_api php artisan key:generate --force
+    Write-Host "Chave da aplicacao gerada com sucesso!" -ForegroundColor Green
 } catch {
-    Write-Host "Erro ao gerar chave. Execute manualmente: docker exec onfly_api php artisan key:generate" -ForegroundColor Yellow
+    Write-Host "Erro ao gerar chave. Execute manualmente: docker exec onfly_api php artisan key:generate --force" -ForegroundColor Yellow
+}
+
+# Gerar chave JWT
+Write-Host "Gerando chave JWT..." -ForegroundColor Yellow
+try {
+    docker exec onfly_api php artisan jwt:secret --force
+    Write-Host "Chave JWT gerada com sucesso!" -ForegroundColor Green
+} catch {
+    Write-Host "Erro ao gerar chave JWT. Execute manualmente: docker exec onfly_api php artisan jwt:secret --force" -ForegroundColor Yellow
 }
 
 # Limpar e recriar banco de dados
