@@ -2,9 +2,12 @@
 import { ref } from 'vue'
 import TheWelcome from '../components/TheWelcome.vue'
 import RegisterModal from '../components/RegisterModal.vue'
+import authService from '@/services/authService'
+import { useLoading } from '@/composables/useLoading'
 
 const isModalVisible = ref(false)
 const welcomeComponent = ref()
+const { startLoading, stopLoading } = useLoading()
 
 const openModal = () => {
   isModalVisible.value = true
@@ -14,19 +17,18 @@ const closeModal = () => {
   isModalVisible.value = false
 }
 
-
 const handleRegistration = async (userData: any) => {
   try {
+    startLoading({message: 'Cadastrando...', overlay: true});
     // Mapear os dados para o formato esperado pela API
     const apiData = {
+      id: Math.floor(Math.random() * 10000) + 1, // ID inteiro entre 1 e 10000
       Name: userData.name,
       Travel: userData.travel,
       DateIn: userData.dateIn,
       DateOut: userData.dateOut,
       Status: 'Pendente' // Status padrão
     }
-    
-    console.log('Enviando dados:', apiData)
     
     // Definir múltiplas URLs para tentar
     const urls = [
@@ -59,6 +61,7 @@ const handleRegistration = async (userData: any) => {
           } catch (e) {
             console.error('Erro ao parsear resposta de erro:', e)
           }
+          stopLoading();
           throw new Error(errorMessage)
         }
         
@@ -67,15 +70,37 @@ const handleRegistration = async (userData: any) => {
         alert('Viagem cadastrada com sucesso!')
         closeModal()
         
-        // Atualizar lista de viagens através da referência do componente
-        if (welcomeComponent.value && welcomeComponent.value.fetchData) {
-          await welcomeComponent.value.fetchData()
+         //se não é admin, não pode dar getAll !! salva apenas in-memory
+        if(!authService.getToken()){
+          // Criar novo objeto de viagem
+          const novaViagem = {
+            id: apiData.id, // ID inteiro entre 1 e 10000
+            Name: apiData.Name,
+            Travel: apiData.Travel,
+            DateIn: apiData.DateIn,
+            DateOut: apiData.DateOut,
+            Status: apiData.Status
+          }
+
+          welcomeComponent.value?.fetchDataLocal(novaViagem)
+
+          alert('Viagem salva localmente (sem autenticação)!')
+          closeModal()
+          stopLoading()
+          return;
+        }else{
+             // Atualizar lista de viagens através da referência do componente
+            if (welcomeComponent.value && welcomeComponent.value.fetchData) {
+              await welcomeComponent.value.fetchData()
+            }
         }
+        stopLoading()
         return // Sucesso, sair do loop
         
       } catch (error) {
         console.error(`Erro com URL ${url}:`, error)
         lastError = error
+        stopLoading()
         continue // Tentar próxima URL
       }
     }

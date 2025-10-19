@@ -7,17 +7,7 @@
       </div>
       
       <form @submit.prevent="handleSubmit" class="modal-body">
-        <div class="form-group">
-          <label for="idPedido">ID Pedido:</label>
-          <input
-            id="idPedido"
-            v-model="form.id"
-            type="text"
-            required
-            placeholder="Digite o ID do pedido"
-          />
-        </div>
-        
+  
         <div class="form-group">
           <label for="name">Nome Completo:</label>
           <input
@@ -87,7 +77,6 @@ interface Emits {
 }
 
 interface FormData {
-  id: string
   name: string
   travel: string
   dateIn: string
@@ -99,7 +88,6 @@ const emit = defineEmits<Emits>()
 
 const isSubmitting = ref(false)
 const form = reactive<FormData>({
-  id: '',
   name: '',
   travel: '',
   dateIn: '',
@@ -168,7 +156,7 @@ const handleSubmit = async () => {
   try {
     // Simular chamada da API
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
+
     emit('submit', { ...form })
     
     closeModal()

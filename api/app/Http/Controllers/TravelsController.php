@@ -107,6 +107,14 @@ class TravelsController extends Controller
                 'Status' => 'sometimes|required|string|max:50'
             ]);
 
+            // Verificar se a viagem pode ser atualizada (apenas status "Pendente")
+            if ($travel->Status !== 'Pendente') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Apenas viagens com status "Pendente" podem ser atualizadas'
+                ], 403);
+            }
+
             $travel->update($validatedData);
 
             return response()->json([

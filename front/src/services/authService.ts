@@ -1,3 +1,5 @@
+import { useLoading } from "@/composables/useLoading"
+
 interface LoginCredentials {
   email: string
   password: string
@@ -66,7 +68,9 @@ class AuthService {
    * Realiza o login do usuário
    */
   async login(credentials: LoginCredentials): Promise<{ token: string; user: User }> {
+    const { startLoading, stopLoading } = useLoading()
     try {
+      startLoading({ message: 'Entrando...' })
       console.log('Tentando fazer login com:', { email: credentials.email })
       console.log('URL da API:', `${this.baseUrl}/login`)
       
@@ -80,21 +84,24 @@ class AuthService {
           headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Authorization': `Bearer ${authService.getToken()}`
                     },
           body: JSON.stringify({
             email: credentials.email,
             password: credentials.password,
           }),
         })
+        
       } catch (fetchError) {
         console.error('Erro na requisição (possivelmente CORS):', fetchError)
-        
+        stopLoading()
         // Verificar se é erro de CORS
         if (fetchError instanceof TypeError) {
+          
           throw new Error(`Erro de CORS ou conexão: ${fetchError.message}. Verifique se a API está rodando em http://localhost:8000 e se o CORS está configurado corretamente.`)
         }
-        
+     
         throw new Error('Não foi possível conectar com a API. Verifique se o servidor está funcionando.')
       }
 
@@ -143,14 +150,14 @@ class AuthService {
       // Salvar token e dados do usuário
       this.setToken(data.data.token)
       this.setUser(data.data.user)
-
+      stopLoading()
       return {
         token: data.data.token,
         user: data.data.user
       }
     } catch (error) {
       console.error('Erro completo no login:', error)
-      
+      stopLoading()
       // Adicionar informações de debug mais detalhadas
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error('Erro de conexão: Não foi possível conectar com a API. Verifique se o servidor está rodando em http://localhost:8000')
@@ -171,8 +178,8 @@ class AuthService {
         await fetch(`${this.baseUrl}/logout`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authService.getToken()}`,
           },
         })
       }
@@ -242,40 +249,18 @@ class AuthService {
   }
 
   /**
-   * Obtém headers de autorização
-   */
-  private getAuthHeaders(): Record<string, string> {
-    const token = this.getToken()
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-    }
-  }
-
-  /**
-   * Faz uma requisição autenticada
-   */
-  async authenticatedRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    const url = `${this.baseUrl}${endpoint}`
-    const headers = {
-      ...this.getAuthHeaders(),
-      ...(options.headers || {}),
-    }
-
-    return fetch(url, {
-      ...options,
-      headers,
-    })
-  }
-
-  /**
    * Renova o token de acesso
    */
   async refreshToken(): Promise<string | null> {
     try {
       const response = await fetch(`${this.baseUrl}/refresh-token`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Authorization': `Bearer ${authService.getToken()}`
+        },
       })
 
       if (!response.ok) {

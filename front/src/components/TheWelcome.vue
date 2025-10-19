@@ -3,9 +3,10 @@ import { ref, onMounted } from 'vue'
 import FilterModal from './FilterModal.vue'
 import authService from '@/services/authService'
 import router from '@/router'
+import { useLoading } from '@/composables/useLoading'
 
 const pessoas = ref<Array<{id: number, name: string, viagem: string, dataIda: string, dataVolta: string, status: string}>>([])
-
+const { startLoading, stopLoading, isLoading, message, overlay } = useLoading()
 const isModalVisibleFilter = ref(false)
 const openModalFilter = () => {
   isModalVisibleFilter.value = true
@@ -33,13 +34,36 @@ async function handleFilter(filterData: any) {
   closeModalFilter();
 }
 
+const fetchDataLocal = (pessoa) => {
+  pessoas.value = [
+    ...pessoas.value,
+    {
+      id: pessoa.id,
+      name: pessoa.Name,
+      viagem: pessoa.Travel,
+      dataIda: pessoa.DateIn,
+      dataVolta: pessoa.DateOut,
+      status: pessoa.Status
+    }
+  ]
+}
+
+
 async function fetchData(){
   try {
+    startLoading({message: 'Carregando dados...', overlay: true});
     // Definir múltiplas URLs para tentar
     const urls = [
       '/api/travels',                          // Proxy do Vite
       'http://localhost:8000/api/travels'      // Acesso direto (desenvolvimento local)
     ]
+
+    //se não é admin, não pode dar getAll !!!!
+    if(!authService.getToken()){
+      stopLoading()
+      return;
+    }
+
     
     let lastError = null
     
@@ -52,7 +76,8 @@ async function fetchData(){
           mode: url.startsWith('/') ? 'same-origin' : 'cors',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${authService.getToken()}`
           }
         })
         
@@ -74,13 +99,14 @@ async function fetchData(){
           dataVolta: item.DateOut,
           status: item.Status
         }))
-        
+        stopLoading()
         console.log('Dados processados:', pessoas.value)
         return // Sucesso, sair do loop
         
       } catch (error) {
         console.error(`Erro com URL ${url}:`, error)
         lastError = error
+        stopLoading()
         continue // Tentar próxima URL
       }
     }
@@ -89,6 +115,7 @@ async function fetchData(){
     throw lastError
     
   } catch (error) {
+    stopLoading()
     console.error('Erro ao buscar dados (todas as URLs falharam):', error)
     // Mostrar dados vazios em caso de erro
     pessoas.value = []
@@ -122,7 +149,7 @@ async function aprovarViagem(id: number) {
     ]
     
     let lastError = null
-    
+    startLoading({message: 'Aprovando...', overlay: true});
     for (const url of urls) {
       try {
         console.log('Tentando aprovar viagem na URL:', `${url}/${id}`)
@@ -132,7 +159,8 @@ async function aprovarViagem(id: number) {
           mode: url.startsWith('/') ? 'same-origin' : 'cors',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${authService.getToken()}`
           },
           body: JSON.stringify({
             Status: 'Aprovada'
@@ -140,7 +168,8 @@ async function aprovarViagem(id: number) {
         })
         
         if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`)
+          const errorData = await response.json()
+          throw new Error(errorData.message || `Erro HTTP: ${response.status}`)
         }
 
         const data = await response.json()
@@ -149,6 +178,7 @@ async function aprovarViagem(id: number) {
         // Recarregar os dados após aprovação
         await fetchData()
         alert('Viagem aprovada com sucesso!')
+        stopLoading()
         return // Sucesso, sair do loop
         
       } catch (error) {
@@ -161,11 +191,13 @@ async function aprovarViagem(id: number) {
     throw lastError
     
   } catch (error: any) {
+    stopLoading()
     console.error('Erro ao aprovar viagem:', error)
     alert('Erro ao aprovar viagem: ' + error.message)
   }
 }
 async function cancelarViagem(id: number) {
+  startLoading({message: 'Cancelando...', overlay: true});
   try {
     if (!confirm('Tem certeza que deseja cancelar esta viagem?')) {
       return
@@ -193,7 +225,8 @@ async function cancelarViagem(id: number) {
           mode: url.startsWith('/') ? 'same-origin' : 'cors',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${authService.getToken()}`
           },
           body: JSON.stringify({
             Status: 'Cancelada'
@@ -201,7 +234,8 @@ async function cancelarViagem(id: number) {
         })
         
         if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`)
+          const errorData = await response.json()
+          throw new Error(errorData.message || `Erro HTTP: ${response.status}`)
         }
 
         const data = await response.json()
@@ -209,6 +243,7 @@ async function cancelarViagem(id: number) {
         
         // Recarregar os dados após cancelamento
         await fetchData()
+        stopLoading()
         alert('Viagem cancelada com sucesso!')
         return // Sucesso, sair do loop
         
@@ -222,14 +257,16 @@ async function cancelarViagem(id: number) {
     throw lastError
     
   } catch (error: any) {
+    stopLoading()
     console.error('Erro ao cancelar viagem:', error)
     alert('Erro ao cancelar viagem: ' + error.message)
   }
 }
 
-// Expor a função fetchData para que componentes pais possam acessá-la
+// Expor as funções para que componentes pais possam acessá-las
 defineExpose({
-  fetchData
+  fetchData,
+  fetchDataLocal
 })
 
 </script>
