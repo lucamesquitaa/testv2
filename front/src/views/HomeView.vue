@@ -4,7 +4,7 @@ import TheWelcome from '../components/TheWelcome.vue'
 import RegisterModal from '../components/RegisterModal.vue'
 
 const isModalVisible = ref(false)
-
+const welcomeComponent = ref()
 
 const openModal = () => {
   isModalVisible.value = true
@@ -66,6 +66,11 @@ const handleRegistration = async (userData: any) => {
         console.log('Resposta do servidor:', data)
         alert('Viagem cadastrada com sucesso!')
         closeModal()
+        
+        // Atualizar lista de viagens através da referência do componente
+        if (welcomeComponent.value && welcomeComponent.value.fetchData) {
+          await welcomeComponent.value.fetchData()
+        }
         return // Sucesso, sair do loop
         
       } catch (error) {
@@ -98,7 +103,7 @@ const handleRegistration = async (userData: any) => {
       
     </div>
     <div class="welcome">
-      <TheWelcome />
+      <TheWelcome ref="welcomeComponent" />
     </div>
     
     <!-- Modal de Cadastro -->

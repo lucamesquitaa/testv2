@@ -210,6 +210,11 @@ async function cancelarViagem(id: number) {
   }
 }
 
+// Expor a função fetchData para que componentes pais possam acessá-la
+defineExpose({
+  fetchData
+})
+
 </script>
 
 <template>

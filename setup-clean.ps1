@@ -87,6 +87,19 @@ try {
     Write-Host "Erro ao executar migrations. Execute manualmente depois." -ForegroundColor Yellow
 }
 
+# Executar seeder para criar usuario admin
+Write-Host "Criando usuario admin padrao..." -ForegroundColor Yellow
+try {
+    if ($useDockerCompose) {
+        docker-compose exec -T api php artisan db:seed --class=UserSeeder
+    } else {
+        docker compose exec -T api php artisan db:seed --class=UserSeeder
+    }
+    Write-Host "Usuario admin criado com sucesso! (admin@admin.com / admin)" -ForegroundColor Green
+} catch {
+    Write-Host "Erro ao criar usuario admin. Execute manualmente: docker exec onfly_api php artisan db:seed --class=UserSeeder" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "Setup completo!" -ForegroundColor Green
 Write-Host ""
@@ -94,6 +107,10 @@ Write-Host "URLs disponiveis:" -ForegroundColor Cyan
 Write-Host "   Frontend: http://localhost:3000" -ForegroundColor White
 Write-Host "   API:      http://localhost:8000" -ForegroundColor White
 Write-Host "   Nginx:    http://localhost" -ForegroundColor White
+Write-Host ""
+Write-Host "Credenciais do usuario admin:" -ForegroundColor Cyan
+Write-Host "   Email:    admin@admin.com" -ForegroundColor White
+Write-Host "   Senha:    admin" -ForegroundColor White
 Write-Host ""
 Write-Host "Comandos uteis:" -ForegroundColor Cyan
 if ($useDockerCompose) {
